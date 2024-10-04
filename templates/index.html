@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+        .sidebar {
+            height: 100vh;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .main-content {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .result-box {
+            display: none;
+        }
+        .thinking {
+            display: none;
+        }
+        .thinking-dots {
+            display: inline-flex;
+        }
+        .thinking-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #007bff;
+            margin: 0 3px;
+            animation: thinking 1.4s infinite ease-in-out both;
+        }
+        .thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+        .thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes thinking {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        .dark-mode .form-control, .dark-mode .form-select {
+            background-color: #495057;
+            color: #f8f9fa;
+            border-color: #6c757d;
+        }
+        .dark-mode .form-control:focus, .dark-mode .form-select:focus {
+            background-color: #495057;
+            color: #f8f9fa;
+        }
+        .dark-mode .modal-content {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+        .preset-item {
+            cursor: pointer;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .preset-item:hover {
+            background-color: #e9ecef;
+        }
+        .dark-mode .preset-item:hover {
+            background-color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 sidebar">
+                <h3>Job Description Presets</h3>
+                <div id="presetList"></div>
+                <button id="addPresetBtn" class="btn btn-primary mt-3">Add New Preset</button>
+            </div>
+            <div class="col-md-9 main-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1>Resume Analyzer</h1>
+                    <button id="darkModeToggle" class="btn btn-outline-primary">
+                        <i class="bi bi-moon"></i> Toggle Dark Mode
+                    </button>
+                </div>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="resume" class="form-label">Upload Resume (PDF)</label>
+                        <input type="file" class="form-control" id="resume" name="resume" accept=".pdf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="jobDescription" class="form-label">Job Description</label>
+                        <textarea class="form-control" id="jobDescription" name="jobDescription" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="analyzeButton">Analyze Resume</button>
+                </form>
+                <div class="thinking mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Analyzing...</span>
+                    </div>
+                    <span class="ms-2">Analyzing resume</span>
+                    <div class="thinking-dots">
+                        <div class="thinking-dot"></div>
+                        <div class="thinking-dot"></div>
+                        <div class="thinking-dot"></div>
+                    </div>
+                </div>
+                <div class="result-box mt-4" id="resultBox">
+                    <h3>Analysis Result</h3>
+                    <p><strong>Rating:</strong> <span id="rating"></span>/10</p>
+                    <p><strong>Matching Keywords:</strong> <span id="keywords"></span></p>
+                    <p><strong>Feedback:</strong> <span id="feedback"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding new preset -->
+    <div class="modal fade" id="addPresetModal" tabindex="-1" aria-labelledby="addPresetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPresetModalLabel">Add New Job Description Preset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPresetForm">
+                        <div class="mb-3">
+                            <label for="presetTitle" class="form-label">Preset Title</label>
+                            <input type="text" class="form-control" id="presetTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="presetDescription" class="form-label">Job Description</label>
+                            <textarea class="form-control" id="presetDescription" rows="5" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="savePresetBtn">Save Preset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const resumeInput = document.getElementById('resume');
+        const jobDescriptionInput = document.getElementById('jobDescription');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const resultBox = document.getElementById('resultBox');
+        const thinkingDiv = document.querySelector('.thinking');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const presetList = document.getElementById('presetList');
+        const addPresetBtn = document.getElementById('addPresetBtn');
+        const addPresetModal = new bootstrap.Modal(document.getElementById('addPresetModal'));
+        const savePresetBtn = document.getElementById('savePresetBtn');
+
+        function updateAnalyzeButton() {
+            analyzeButton.disabled = !(resumeInput.files.length > 0 && jobDescriptionInput.value.trim() !== '');
+        }
+
+        function loadPresets() {
+            fetch('/get_presets')
+                .then(response => response.json())
+                .then(presets => {
+                    presetList.innerHTML = '';
+                    presets.forEach(preset => {
+                        const presetItem = document.createElement('div');
+                        presetItem.className = 'preset-item';
+                        presetItem.textContent = preset.title;
+                        presetItem.addEventListener('click', () => {
+                            jobDescriptionInput.value = preset.description;
+                            updateAnalyzeButton();
+                        });
+                        presetList.appendChild(presetItem);
+                    });
+                })
+                .catch(error => console.error('Error loading presets:', error));
+        }
+
+        resumeInput.addEventListener('change', updateAnalyzeButton);
+        jobDescriptionInput.addEventListener('input', updateAnalyzeButton);
+
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            
+            resultBox.style.display = 'none';
+            thinkingDiv.style.display = 'block';
+            analyzeButton.disabled = true;
+
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                thinkingDiv.style.display = 'none';
+                analyzeButton.disabled = false;
+
+                try {
+                    const parsedData = JSON.parse(data);
+
+                    document.getElementById('rating').textContent = parsedData.rating || 'N/A';
+                    document.getElementById('keywords').textContent = Array.isArray(parsedData.matching_keywords) 
+                        ? parsedData.matching_keywords.join(', ') 
+                        : (parsedData.matching_keywords || 'N/A');
+                    document.getElementById('feedback').textContent = parsedData.feedback || 'No feedback provided';
+                    resultBox.style.display = 'block';
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                    alert('An error occurred while processing the response. Please check the console for more details.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                thinkingDiv.style.display = 'none';
+                analyzeButton.disabled = false;
+                alert('An error occurred while analyzing the resume. Please check the console for more details.');
+            });
+        });
+
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            darkModeToggle.innerHTML = isDarkMode 
+                ? '<i class="bi bi-sun"></i> Toggle Light Mode'
+                : '<i class="bi bi-moon"></i> Toggle Dark Mode';
+        });
+
+        addPresetBtn.addEventListener('click', () => {
+            addPresetModal.show();
+        });
+
+        savePresetBtn.addEventListener('click', () => {
+            const title = document.getElementById('presetTitle').value;
+            const description = document.getElementById('presetDescription').value;
+            
+            fetch('/add_preset', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, description }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addPresetModal.hide();
+                    loadPresets();
+                    document.getElementById('addPresetForm').reset();
+                } else {
+                    alert('Failed to add preset. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding preset:', error);
+                alert('An error occurred while adding the preset. Please try again.');
+            });
+        });
+
+        updateAnalyzeButton();
+        loadPresets();
+    </script>
+</body>
+</html>
