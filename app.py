@@ -128,22 +128,5 @@ def add_preset():
     
     return jsonify({"success": True})
 
-def initialize_app():
-    try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        logger.info(f"Uploads folder created/verified: {app.config['UPLOAD_FOLDER']}")
-    except Exception as e:
-        logger.error(f"Failed to create uploads folder: {e}")
-    
-    # Create presets file if it doesn't exist
-    if not os.path.exists(app.config['PRESETS_FILE']):
-        try:
-            with open(app.config['PRESETS_FILE'], 'w') as file:
-                json.dump([], file)
-            logger.info(f"Presets file created: {app.config['PRESETS_FILE']}")
-        except Exception as e:
-            logger.error(f"Failed to create presets file: {e}")
-    
 if __name__ == '__main__':
-    initialize_app()
     app.run(debug=True)
