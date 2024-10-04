@@ -33,8 +33,8 @@ Resume Analyzer is an AI-powered web application that analyzes resumes against j
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/resume-analyzer.git
-   cd resume-analyzer
+   git clone https://github.com/Dwij1704/Resume-Analyzer.git
+   cd Resume-Analyzer
    ```
 
 2. Create a virtual environment and activate it:
@@ -57,6 +57,21 @@ Resume Analyzer is an AI-powered web application that analyzes resumes against j
    ```
    echo "[]" > job_description_presets.txt
    ```
+
+### 🐳 Docker Setup
+
+1. Build the Docker image:
+   ```
+   docker build -t healthcare-ai-chatbot .
+   ```
+
+2. Run the Docker container:
+   ```
+   docker run -p 5000:5000 -e OPENAI_API_KEY=your_openai_api_key_here 
+   healthcare-ai-chatbot
+   ```
+
+3. Open a web browser and navigate to `http://localhost:5000`
 
 ## 🚀 Running the Application
 
@@ -82,7 +97,7 @@ Toggle dark mode by clicking the "Toggle Dark Mode" button in the top right corn
 ## 📁 Project Structure
 
 ```
-resume-Analyzer/
+Resume-Analyzer/
 ├── app.py                  # Main Flask application
 ├── requirements.txt        # Python dependencies
 ├── .env                    # Environment variables (create this file)
