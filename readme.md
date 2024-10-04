@@ -62,13 +62,13 @@ Resume Analyzer is an AI-powered web application that analyzes resumes against j
 
 1. Build the Docker image:
    ```
-   docker build -t healthcare-ai-chatbot .
+   docker build -t resume-analyzer .
    ```
 
 2. Run the Docker container:
    ```
    docker run -p 5000:5000 -e OPENAI_API_KEY=your_openai_api_key_here 
-   healthcare-ai-chatbot
+   resume-analyzer
    ```
 
 3. Open a web browser and navigate to `http://localhost:5000`
