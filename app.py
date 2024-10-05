@@ -14,6 +14,9 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
 app.config['PRESETS_FILE'] = 'job_description_presets.txt'
+if not os.path.exists(app.config['PRESETS_FILE']):
+    with open(app.config['PRESETS_FILE'], 'w') as file:
+        json.dump([], file, indent=2)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
